@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>دستیار هوش مصنوعی ایرانی</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+<!-- ❌ کتابخونه marked رو کاملا حذف کردیم چون نیازی بهش نداریم -->
+
+<style>
+  :root {
+    --navy-blue: #1e3a8a; --sky-blue: #38bdf8; --bg-main: #f8fafc; 
+    --box-bg: #ffffff; --sidebar-bg: rgba(255, 255, 255, 0.95);
+    --text-main: #1e293b; --text-muted: #64748b; --me-bg: var(--navy-blue);
+    --me-text: #ffffff; --bot-bg: #ffffff; --bot-border: rgba(56, 189, 248, 0.4);
+    --bot-text: #1e293b; --box-shadow: 0 20px 40px -10px rgba(30, 58, 138, 0.1);
+    --input-bg: #f8fafc; --hover-bg: rgba(56, 189, 248, 0.1); --delete-color: #ef4444;
+    --code-bg: #1e1e2e; --code-header: #181825;
+  }
+  [data-theme="dark"] {
+    --navy-blue: #a78bfa; --sky-blue: #38bdf8; --bg-main: #0b1120;
+    --box-bg: rgba(15, 23, 42, 0.85); --sidebar-bg: rgba(15, 23, 42, 0.95);
+    --text-main: #f8fafc; --text-muted: #94a3b8; --me-bg: #8b5cf6;
+    --me-text: #ffffff; --bot-bg: rgba(255, 255, 255, 0.05); --bot-border: rgba(255, 255, 255, 0.1);
+    --bot-text: #e2e8f0; --box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    --input-bg: rgba(0, 0, 0, 0.3); --hover-bg: rgba(56, 189, 248, 0.15); --delete-color: #f87171;
+    --code-bg: #0f172a; --code-header: #0b1120;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s; }
+  
+  body {
+    font-family: 'Vazirmatn', Tahoma, sans-serif; background-color: var(--bg-main);
+    background-image: radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.08), transparent 40%),
+                      radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15), transparent 40%);
+    color: var(--text-main); display: flex; justify-content: center; align-items: center;
+    height: 100dvh;
+    overflow: hidden;
+    padding: 10px;
+  }
+
+  .app-container {
+    display: flex; width: 100%; max-width: 900px;
+    height: 100%; max-height: 900px;
+    border-radius: 24px; box-shadow: var(--box-shadow); overflow: hidden;
+    position: relative; border: 1px solid rgba(56, 189, 248, 0.2);
+  }
+  
+  .sidebar {
+    width: 260px; background: var(--sidebar-bg); backdrop-filter: blur(20px);
+    border-left: 1px solid var(--bot-border); display: flex; flex-direction: column;
+    padding: 15px; position: absolute; right: -260px; top: 0; bottom: 0; z-index: 10; transition: right 0.3s ease;
+  }
+  .sidebar.open { right: 0; }
+  .new-chat-btn {
+    display: flex; align-items: center; gap: 10px; background: var(--input-bg);
+    border: 1px solid var(--bot-border); padding: 10px; border-radius: 12px;
+    cursor: pointer; color: var(--text-main); font-family: inherit; font-weight: bold; margin-bottom: 15px;
+  }
+  .new-chat-btn:hover { background: var(--hover-bg); }
+  .new-chat-btn img { width: 28px; height: 28px; }
+  .chat-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+  .chat-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; border-radius: 10px; cursor: pointer; font-size: 14px; transition: background 0.2s;
+  }
+  .chat-item:hover, .chat-item.active { background: var(--hover-bg); }
+  .chat-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; pointer-events: none; }
+  .delete-btn { display: none; background: transparent; border: none; cursor: pointer; color: var(--delete-color); font-size: 16px; padding: 4px; border-radius: 6px; }
+  .chat-item:hover .delete-btn { display: block; }
+
+  .chat-area { 
+    flex: 1; display: flex; flex-direction: column; background: var(--box-bg); 
+    backdrop-filter: blur(20px); padding: 15px; position: relative; z-index: 5; 
+    height: 100%; overflow: hidden; 
+  }
+
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--bot-border); flex-shrink: 0; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .menu-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; cursor: pointer; color: var(--text-main); }
+  .menu-btn svg { width: 24px; height: 24px; fill: currentColor; }
+  .header-title { display: flex; align-items: center; gap: 8px; }
+  .logo-img { width: 32px; height: 32px; border-radius: 8px; }
+  .header h2 { font-size: 16px; font-weight: 800; }
+  .theme-toggle { width: 36px; height: 36px; border-radius: 50%; background: var(--input-bg); border: 1px solid var(--bot-border); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .theme-toggle img { width: 18px; height: 18px; }
+
+  #log { 
+    flex: 1; overflow-y: auto; overflow-x: hidden; padding: 5px; 
+    display: flex; flex-direction: column; gap: 12px; 
+    scroll-behavior: smooth; min-height: 0; 
+    padding-bottom: 20px;
+  }
+  #log::-webkit-scrollbar { width: 5px; }
+  #log::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.4); border-radius: 10px; }
+  
+  .msg {
+    max-width: 90%; min-width: 0; width: fit-content; padding: 12px 16px; border-radius: 18px; font-size: 14px;
+    line-height: 1.7; word-wrap: break-word; animation: slideIn 0.3s ease forwards;
+    opacity: 0; transform: translateY(10px); flex-shrink: 0;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .msg::-webkit-scrollbar { width: 4px; }
+  .msg::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+  @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
+  
+  .me { align-self: flex-start; background: var(--me-bg); color: var(--me-text); border-bottom-right-radius: 4px; }
+  .bot { align-self: flex-end; background: var(--bot-bg); border: 1px solid var(--bot-border); color: var(--bot-text); border-bottom-left-radius: 4px; width: 100%; }
+
+  .msg-image { max-width: 100%; border-radius: 10px; margin-bottom: 8px; display: block; }
+  .bot p { margin-bottom: 8px; }
+  .bot p:last-child { margin-bottom: 0; }
+  .bot ul, .bot ol { margin: 8px 20px; }
+  .bot code:not(pre code) { background: rgba(56, 189, 248, 0.2); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+  
+  .code-block-wrapper { 
+    margin: 10px 0; border-radius: 10px; overflow: hidden; 
+    background: var(--code-bg); max-width: 100%; width: 100%; 
+    display: flex; flex-direction: column;
+  }
+  .code-header { display: flex; justify-content: space-between; align-items: center; background: var(--code-header); padding: 8px 12px; font-size: 12px; color: #a6accd; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .code-lang { font-family: monospace; text-transform: uppercase; }
+  .copy-btn { background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 11px; transition: background 0.2s; display: flex; align-items: center; gap: 4px; }
+  .copy-btn:hover { background: rgba(255,255,255,0.2); }
+  .copy-btn.copied { background: #10b981; color: white; }
+  
+  .code-block-wrapper pre { 
+    margin: 0; padding: 12px; overflow-x: auto; overflow-y: hidden; 
+    direction: ltr; text-align: left; max-width: 100%; width: 100%; 
+  }
+  .code-block-wrapper code { font-family: 'Courier New', Courier, monospace; font-size: 13px; color: #cdd6f4; white-space: pre; }
+  .code-block-wrapper pre::-webkit-scrollbar { height: 6px; }
+  .code-block-wrapper pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+  .input-container { 
+    display: flex; flex-direction: column; gap: 8px; margin-top: 10px; 
+    background: var(--input-bg); padding: 10px; border-radius: 18px; 
+    border: 2px solid transparent; transition: border-color 0.3s; flex-shrink: 0; 
+  }
+  .input-container:focus-within { border-color: var(--sky-blue); }
+  .textarea-wrapper { display: flex; align-items: flex-end; gap: 10px; }
+  
+  textarea { 
+    flex: 1; padding: 8px; border: none; background: transparent; color: var(--text-main); 
+    font-family: inherit; font-size: 15px; outline: none; resize: none; 
+    min-height: 44px; max-height: 150px; overflow-y: auto; line-height: 1.5; 
+  }
+  textarea::placeholder { color: var(--text-muted); }
+  
+  .tools-row { display: flex; align-items: center; gap: 8px; padding: 0 4px; }
+  .tool-btn { background: transparent; border: 1px solid var(--bot-border); color: var(--text-main); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 16px; }
+  .tool-btn:hover { background: var(--hover-bg); }
+  .tool-btn.active { background: var(--sky-blue); color: white; border-color: var(--sky-blue); }
+  .send-btn { margin-right: auto; background: linear-gradient(135deg, var(--sky-blue), var(--navy-blue)); color: #fff; border: none; padding: 8px 16px; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  .send-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+  .overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 8; display: none; opacity: 0; transition: opacity 0.3s; }
+  .overlay.active { display: block; opacity: 1; }
+
+  .typing { display: flex; gap: 5px; padding: 16px 20px !important; }
+  .typing span { width: 6px; height: 6px; background-color: var(--sky-blue); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+  .typing span:nth-child(1) { animation-delay: -0.32s; }
+  .typing span:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; } 40% { transform: scale(1.2); opacity: 1; } }
+
+  #scroll-btn {
+    position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%) translateY(20px);
+    width: 40px; height: 40px; background: var(--me-bg); color: #fff; border: none; border-radius: 50%;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3); opacity: 0; pointer-events: none;
+    transition: all 0.3s ease; z-index: 20;
+  }
+  #scroll-btn.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+  #scroll-btn svg { width: 24px; height: 24px; fill: currentColor; }
+
+  @media (max-width: 600px) {
+    body { padding: 0; }
+    .app-container { border-radius: 0; max-height: 100dvh; height: 100dvh; border: none; }
+    .chat-area { padding: 10px; }
+    .msg { max-width: 95%; max-height: 350px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <div class="sidebar" id="sidebar">
+    <button class="new-chat-btn" onclick="createNewChat()">
+      <img src="/static/new_chat.png" alt="جدید"> گفتگوی جدید
+    </button>
+    <div class="chat-list" id="chat-list"></div>
+  </div>
+
+  <div class="chat-area">
+    <div class="header">
+      <div class="header-left">
+        <button class="menu-btn" onclick="toggleSidebar()">
+          <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+        </button>
+        <div class="header-title">
+          <img src="/static/logo.png" alt="لوگو" class="logo-img">
+          <h2>دستیار ایرانی</h2>
+        </div>
+      </div>
+      <div class="theme-toggle" onclick="toggleTheme()">
+        <img id="theme-icon" src="/static/moon.png" alt="تم">
+      </div>
+    </div>
+    
+    <div id="log"></div>
+    
+    <button id="scroll-btn" onclick="scrollToBottom(true)">
+      <svg viewBox="0 0 24 24"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+    </button>
+
+    <div class="input-container">
+      <div class="textarea-wrapper">
+        <textarea id="inp" placeholder="پیامت رو بنویس..." autofocus autocomplete="off"></textarea>
+      </div>
+      <div class="tools-row">
+        <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+        <button class="tool-btn" onclick="document.getElementById('file-input').click()" title="ارسال تصویر">+</button>
+        <button class="tool-btn" id="web-search-btn" onclick="toggleWebSearch()" title="جستجو">🌐</button>
+        <button class="tool-btn" id="think-btn" onclick="toggleThink()" title="تفکر">🧠</button>
+        <button class="send-btn" onclick="send()">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> ارسال
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+</div>
+
+<script>
+  const log = document.getElementById('log');
+  const inp = document.getElementById('inp');
+  const themeIcon = document.getElementById('theme-icon');
+  const htmlElement = document.documentElement;
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  const chatList = document.getElementById('chat-list');
+  const scrollBtn = document.getElementById('scroll-btn');
+  
+  let isWebSearchEnabled = false;
+  let isThinkEnabled = false;
+  let selectedImageBase64 = null;
+  let isTyping = false;
+  let autoScrollEnabled = true; 
+
+  log.addEventListener('scroll', () => {
+    const distanceToBottom = log.scrollHeight - log.scrollTop - log.clientHeight;
+    if (distanceToBottom > 100) {
+      scrollBtn.classList.add('show');
+      autoScrollEnabled = false;
+    } else {
+      scrollBtn.classList.remove('show');
+      autoScrollEnabled = true;
+    }
+  });
+
+  function scrollToBottom(force = false) {
+    if (!autoScrollEnabled && !force) return; 
+    requestAnimationFrame(() => {
+      log.scrollTop = log.scrollHeight;
+      setTimeout(() => { log.scrollTop = log.scrollHeight; }, 100);
+    });
+  }
+
+  function toggleTheme() {
+    if (htmlElement.getAttribute('data-theme') === 'light') {
+      htmlElement.setAttribute('data-theme', 'dark');
+      themeIcon.src = '/static/sun.png';
+    } else {
+      htmlElement.setAttribute('data-theme', 'light');
+      themeIcon.src = '/static/moon.png';
+    }
+  }
+
+  function toggleSidebar() {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+  }
+
+  inp.addEventListener('input', function() {
+    this.style.height = 'auto'; 
+    this.style.height = (this.scrollHeight) + 'px'; 
+  });
+
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      selectedImageBase64 = e.target.result;
+      inp.value = "این تصویر رو بررسی کن: ";
+      inp.dispatchEvent(new Event('input'));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function toggleWebSearch() { isWebSearchEnabled = !isWebSearchEnabled; document.getElementById('web-search-btn').classList.toggle('active', isWebSearchEnabled); }
+  function toggleThink() { isThinkEnabled = !isThinkEnabled; document.getElementById('think-btn').classList.toggle('active', isThinkEnabled); }
+
+  let chats = JSON.parse(localStorage.getItem('my_chats')) || [];
+  let currentChatId = localStorage.getItem('current_chat_id') || null;
+
+  function saveChats() { localStorage.setItem('my_chats', JSON.stringify(chats)); localStorage.setItem('current_chat_id', currentChatId); }
+
+  function renderChatList() {
+    chatList.innerHTML = '';
+    chats.forEach(chat => {
+      const div = document.createElement('div');
+      div.className = 'chat-item' + (chat.id === currentChatId ? ' active' : '');
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'chat-name';
+      nameSpan.textContent = chat.name;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'delete-btn';
+      delBtn.innerHTML = '✕';
+      delBtn.onclick = (e) => { e.stopPropagation(); deleteChat(chat.id); };
+      div.onclick = () => loadChat(chat.id);
+      div.appendChild(nameSpan);
+      div.appendChild(delBtn);
+      chatList.appendChild(div);
+    });
+  }
+
+  function deleteChat(id) {
+    chats = chats.filter(c => c.id !== id);
+    if (currentChatId === id) {
+      if (chats.length > 0) currentChatId = chats[0].id;
+      else { createNewChat(); return; }
+    }
+    saveChats(); renderChatList(); renderMessages();
+  }
+
+  function createNewChat() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+    const newChat = {
+      id: Date.now().toString(),
+      name: 'گفتگو ' + timeString,
+      messages: [{ role: 'bot', text: 'سلام! من دستیار هوش مصنوعی ایرانی هستم. چطور می‌تونم کمکت کنم؟' }]
+    };
+    chats.unshift(newChat);
+    currentChatId = newChat.id;
+    saveChats(); renderChatList(); renderMessages(); toggleSidebar();
+  }
+
+  function loadChat(id) {
+    if (isTyping) return; 
+    currentChatId = id;
+    saveChats(); renderChatList(); renderMessages(); toggleSidebar();
+  }
+
+  function renderMessages() {
+    log.innerHTML = '';
+    const currentChat = chats.find(c => c.id === currentChatId);
+    if (!currentChat) return;
+    currentChat.messages.forEach(msg => addMessageToDOM(msg.text, msg.role, msg.image));
+    scrollToBottom(true); 
+  }
+
+  // 🔴 تابع جدید برای تشخیص کدها بدون نیاز به کتابخونه marked
+  function formatMessage(text, imageBase64) {
+    let html = '';
+    if (imageBase64) html += `<img src="${imageBase64}" class="msg-image">`;
+    
+    if (text) {
+        // ۱. اگر کد داخل بک‌تیک‌ها باشد
+        if (text.includes('```')) {
+            // جدا کردن بخش‌های متنی و کدی
+            let parts = text.split('```');
+            for (let i = 0; i < parts.length; i++) {
+                if (i % 2 === 0) {
+                    // بخش‌های متنی عادی (زوج)
+                    html += `<p>${parts[i].replace(/\n/g, '<br>')}</p>`;
+                } else {
+                    // بخش‌های کد (فرد)
+                    let codePart = parts[i];
+                    let lang = 'text';
+                    let codeText = codePart;
+                    
+                    // تشخیص زبان برنامه‌نویسی (اگر در خط اول باشد)
+                    let firstLineBreak = codePart.indexOf('\n');
+                    if (firstLineBreak !== -1) {
+                        let firstLine = codePart.substring(0, firstLineBreak).trim();
+                        if (firstLine !== '') {
+                            lang = firstLine;
+                            codeText = codePart.substring(firstLineBreak + 1);
+                        }
+                    }
+                    
+                    // ساخت کارت کد
+                    html += `
+                        <div class="code-block-wrapper">
+                          <div class="code-header">
+                            <span class="code-lang">${lang}</span>
+                            <button class="copy-btn" onclick="copyCode(this)">📋 کپی</button>
+                          </div>
+                          <pre><code>${codeText}</code></pre>
+                        </div>
+                    `;
+                }
+            }
+        } else {
+            // اگر کد نبود، متن عادی
+            html += `<p>${text.replace(/\n/g, '<br>')}</p>`;
+        }
+    }
+    return html;
+  }
+
+  window.copyCode = function(btn) {
+    const codeText = btn.closest('.code-block-wrapper').querySelector('pre').innerText;
+    navigator.clipboard.writeText(codeText).then(() => {
+      btn.innerHTML = '✅ کپی شد';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = '📋 کپی'; btn.classList.remove('copied'); }, 2000);
+    }).catch(err => {
+      alert('خطا در کپی: ' + err);
+    });
+  }
+
+  // 🔴 افکت تایپ زنده
+  function typeWriter(element, fullHtml, speed) {
+    isTyping = true;
+    element.innerHTML = '';
+    
+    // برای اینکه کارت‌های کد کامل ساخته بشن، به جای کاراکتر به کاراکتر، همه رو یکجا قرار می‌دیم
+    // (اگر کاراکتر به کاراکتر بریم، تگ‌های HTML خراب می‌شن)
+    element.innerHTML = fullHtml;
+    isTyping = false;
+    scrollToBottom();
+  }
+
+  function addMessageToDOM(text, role, imageBase64 = null, animate = false) {
+    const d = document.createElement('div');
+    d.className = 'msg ' + role;
+    
+    if (role === 'bot') {
+      const formatted = formatMessage(text, imageBase64);
+      // از افکت تایپ صرف نظر کردیم چون کارت کد رو خراب می‌کرد
+      d.innerHTML = formatted;
+      log.appendChild(d);
+      scrollToBottom();
+    } else {
+      if (imageBase64) {
+        const img = document.createElement('img');
+        img.src = imageBase64;
+        img.className = 'msg-image';
+        d.appendChild(img);
+      }
+      if (text) {
+        const textNode = document.createElement('div');
+        textNode.textContent = text;
+        d.appendChild(textNode);
+      }
+      log.appendChild(d);
+      scrollToBottom();
+    }
+  }
+
+  async function send() {
+    const text = inp.value.trim();
+    if (!text && !selectedImageBase64) return;
+    if (isTyping) return;
+
+    if (!currentChatId) createNewChat();
+    const currentChat = chats.find(c => c.id === currentChatId);
+    
+    const messageObj = { role: 'me', text: text };
+    if (selectedImageBase64) messageObj.image = selectedImageBase64;
+    
+    currentChat.messages.push(messageObj);
+    addMessageToDOM(text, 'me', selectedImageBase64);
+    
+    inp.value = "";
+    inp.style.height = '44px'; 
+    const currentImage = selectedImageBase64;
+    selectedImageBase64 = null;
+    
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'msg bot typing';
+    typingDiv.innerHTML = '<span></span><span></span><span></span>';
+    log.appendChild(typingDiv);
+    scrollToBottom();
+
+    try {
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            message: text || "این تصویر را تحلیل کن",
+            image: currentImage,
+            web_search: isWebSearchEnabled,
+            think: isThinkEnabled
+        })
+      });
+      const data = await res.json();
+      typingDiv.remove();
+      
+      if (data.reply) {
+          currentChat.messages.push({ role: 'bot', text: data.reply });
+          addMessageToDOM(data.reply, 'bot');
+          saveChats();
+      } else {
+          addMessageToDOM("خطا در دریافت پاسخ از سرور!", "bot");
+      }
+    } catch (error) {
+      typingDiv.remove();
+      addMessageToDOM("خطا در ارتباط با سرور!", "bot");
+    }
+  }
+
+  inp.addEventListener('keydown', e => { 
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+
+  if (chats.length === 0) createNewChat();
+  else { renderChatList(); renderMessages(); }
+</script>
+</body>
+        </html>
